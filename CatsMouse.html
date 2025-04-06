@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cat Runner</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #f4f4f4; font-family: sans-serif; }
+    canvas { display: block; margin: 0 auto; background: #fff; border: 2px solid #333; }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="1600" height="400"></canvas>  <!-- Увеличен размер канваса -->
+  <audio id="meowSound" src="p.wav" preload="auto"></audio>  <!-- Путь к звуку мяуканья -->
+  <audio id="backgroundMusic" src="m.wav" loop></audio>  <!-- Путь к фоновому звуку -->
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Load images for cat, mouse, and background
+    const catImg = new Image();
+    catImg.src = 'c.png';  // Путь к спрайту кота
+    const mouseImg = new Image();
+    mouseImg.src = 'r.png'; // Путь к спрайту мыши
+    const backgroundImg = new Image();
+    backgroundImg.src = 'bg.jpg';  // Путь к изображению фона (изменено на bg.jpg)
+
+    // Подняли кота на 30 пикселей, кот теперь будет стоять на полу (y = 190px)
+    let cat = { x: 50, y: 220, width: 160, height: 100, vy: 0, jumping: false };  // Подняли кота
+    let gravity = 1;
+    let ground = 300;
+
+    // Опустили мышь на 70 пикселей, мышь будет стоять на полу (y = 390px)
+    let mouse = { x: 50, y: 350, width: 90, height: 80 };  // Мышь опущена
+    let speed = 6;
+    let speedIncrease = 0.1;  // Увеличение скорости
+    let timeElapsed = 0;
+
+    let score = 0;
+    let gameOver = false;
+
+    // Function to draw the background
+    function drawBackground() {
+      ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);  // Рисуем фон
+    }
+
+    // Function to draw the cat
+    function drawCat() {
+      ctx.drawImage(catImg, cat.x, cat.y, cat.width, cat.height);  // Используем спрайт кота
+    }
+
+    // Function to draw the mouse
+    function drawMouse() {
+      ctx.drawImage(mouseImg, mouse.x, mouse.y, mouse.width, mouse.height);  // Используем спрайт мыши
+    }
+
+    // Function to draw the score
+    function drawScore() {
+      ctx.fillStyle = "black";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 10, 20);
+    }
+
+    // Reset the game state
+    function resetGame() {
+      mouse.x = 1600;
+      score = 0;
+      gameOver = false;
+      speed = 6;  // Сброс скорости при новой игре
+      timeElapsed = 0;  // Сброс времени
+    }
+
+    // Main game loop
+    function gameLoop() {
+      if (gameOver) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the background
+      drawBackground();
+
+      // Handle Cat's physics (jumping)
+      if (cat.jumping) {
+        cat.vy += gravity;
+        cat.y += cat.vy;
+        if (cat.y >= ground) {
+          cat.y = ground;
+          cat.vy = 0;
+          cat.jumping = false;
+        }
+      }
+
+      // Move mouse
+      mouse.x -= speed;
+      if (mouse.x + mouse.width < 0) {
+        mouse.x = 1600 + Math.random() * 300;  // Мышь появляется в случайной позиции с правой стороны
+        score++;
+      }
+
+      // Increase speed over time (every second)
+      timeElapsed++;
+      if (timeElapsed % 60 === 0) {  // Увеличиваем скорость каждую секунду (60 кадров)
+        speed += speedIncrease;
+      }
+
+      // Collision detection between cat and mouse
+      if (
+        cat.x < mouse.x + mouse.width &&
+        cat.x + cat.width > mouse.x &&
+        cat.y < mouse.y + mouse.height &&
+        cat.y + cat.height > mouse.y
+      ) {
+        gameOver = true;
+        alert("Game Over! Score: " + score);
+        resetGame();
+      }
+
+      drawCat();
+      drawMouse();
+      drawScore();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Event listener for jumping when spacebar is pressed
+    document.addEventListener("keydown", function (e) {
+      if (e.code === "Space" && !cat.jumping) {
+        cat.jumping = true;
+        cat.vy = -30;  // Увеличена скорость прыжка кота (в 1.5 раза)
+        document.getElementById("meowSound").play();  // Play meow sound on jump
+        if (document.getElementById("backgroundMusic").paused) {
+          document.getElementById("backgroundMusic").play();  // Запускаем фоновую музыку, если она не воспроизводится
+        }
+      }
+    });
+
+    // Start the game loop after images are loaded
+    catImg.onload = function() {
+      mouseImg.onload = function() {
+        backgroundImg.onload = function() {
+          // Фоновая музыка начнется только после первого взаимодействия пользователя с игрой
+        };
+      };
+    };
+
+    // Start the game loop as soon as images are loaded
+    catImg.onload = mouseImg.onload = backgroundImg.onload = function() {
+      gameLoop();  // Start the game loop once all images are loaded
+    };
+  </script>
+</body>
+</html>
+
+
+
+
